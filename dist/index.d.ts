@@ -3,9 +3,11 @@ export declare function addWgslInclude(name: string, source: string): void;
 export declare type FinalLine = {
     sourceName?: string;
     line: string;
-    originalLine: number;
+    originLine: number;
     includeLine?: FinalLine;
 };
+
+export declare function getIncludeList(source: string, defines?: Map<string, string>): Set<string>;
 
 export declare function getWgslInclude(name: string): string | undefined;
 

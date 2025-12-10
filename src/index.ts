@@ -149,7 +149,7 @@ export function getWgslInclude(name: string): string | undefined {
 export type FinalLine = {
 	sourceName?: string;
 	line: string;
-	originalLine: number;
+	originLine: number;
 	includeLine?: FinalLine;
 }
 
@@ -163,6 +163,29 @@ export function preprocessWgsl(source: string, defines: Map<string, string> = ne
 		finalArray.push(line.line);
 	}
 	return finalArray.join('\n');
+}
+
+export function getIncludeList(source: string, defines: Map<string, string> = new Map<string, string>()): Set<string> {
+	const expandedArray = expandIncludes(source);
+
+	const processedArray = preprocess(expandedArray, defines);
+
+	const includes = new Set<string>();
+
+	function addInclude(line: FinalLine): void {
+		if (line.sourceName) {
+			includes.add(line.sourceName);
+		}
+
+		if (line.includeLine) {
+			addInclude(line.includeLine);
+		}
+	}
+
+	for (const line of processedArray) {
+		addInclude(line);
+	}
+	return includes;
 }
 
 export function preprocessWgslLineMap(source: string, defines: Map<string, string> = new Map<string, string>()): FinalLine[] {
@@ -200,7 +223,7 @@ function expandIncludes(source: string): FinalLine[] {
 			const include = getInclude(includeName, new Set(), allIncludes);
 			if (include) {
 				for (const includeLine of include) {
-					outArray.push({ line: includeLine.line, originalLine: i, includeLine });
+					outArray.push({ line: includeLine.line, originLine: i, includeLine });
 
 				}
 				actualSize = include.length;
@@ -210,7 +233,7 @@ function expandIncludes(source: string): FinalLine[] {
 				}
 			}
 		} else {
-			outArray.push({ line, originalLine: i, });
+			outArray.push({ line, originLine: i, });
 		}
 		sizeOfSourceRow[i] = actualSize;
 	}
@@ -238,7 +261,7 @@ function getInclude(includeName: string, recursion = new Set<string>(), allInclu
 			const include = getInclude(nestedIncludeName, recursion, allIncludes);
 			if (include) {
 				for (const includeLine of include) {
-					outArray.push({ sourceName: includeName, line: includeLine.line, originalLine: i, includeLine });
+					outArray.push({ sourceName: includeName, line: includeLine.line, originLine: i, includeLine });
 				}
 			}
 			continue;
@@ -252,7 +275,7 @@ function getInclude(includeName: string, recursion = new Set<string>(), allInclu
 				continue;
 			}
 		}
-		outArray.push({ sourceName: includeName, line, originalLine: i, });
+		outArray.push({ sourceName: includeName, line, originLine: i, });
 	}
 	allIncludes.add(includeName);
 	return outArray;

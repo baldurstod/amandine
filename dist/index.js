@@ -110,6 +110,23 @@ function preprocessWgsl(source, defines = new Map()) {
     }
     return finalArray.join('\n');
 }
+function getIncludeList(source, defines = new Map()) {
+    const expandedArray = expandIncludes(source);
+    const processedArray = preprocess(expandedArray, defines);
+    const includes = new Set();
+    function addInclude(line) {
+        if (line.sourceName) {
+            includes.add(line.sourceName);
+        }
+        if (line.includeLine) {
+            addInclude(line.includeLine);
+        }
+    }
+    for (const line of processedArray) {
+        addInclude(line);
+    }
+    return includes;
+}
 function preprocessWgslLineMap(source, defines = new Map()) {
     const expandedArray = expandIncludes(source);
     const processedArray = preprocess(expandedArray, defines);
@@ -135,7 +152,7 @@ function expandIncludes(source) {
             const include = getInclude(includeName, new Set(), allIncludes);
             if (include) {
                 for (const includeLine of include) {
-                    outArray.push({ line: includeLine.line, originalLine: i, includeLine });
+                    outArray.push({ line: includeLine.line, originLine: i, includeLine });
                 }
                 include.length;
             }
@@ -146,7 +163,7 @@ function expandIncludes(source) {
             }
         }
         else {
-            outArray.push({ line, originalLine: i, });
+            outArray.push({ line, originLine: i, });
         }
     }
     return outArray;
@@ -171,7 +188,7 @@ function getInclude(includeName, recursion = new Set(), allIncludes = new Set())
             const include = getInclude(nestedIncludeName, recursion, allIncludes);
             if (include) {
                 for (const includeLine of include) {
-                    outArray.push({ sourceName: includeName, line: includeLine.line, originalLine: i, includeLine });
+                    outArray.push({ sourceName: includeName, line: includeLine.line, originLine: i, includeLine });
                 }
             }
             continue;
@@ -185,10 +202,10 @@ function getInclude(includeName, recursion = new Set(), allIncludes = new Set())
                 continue;
             }
         }
-        outArray.push({ sourceName: includeName, line, originalLine: i, });
+        outArray.push({ sourceName: includeName, line, originLine: i, });
     }
     allIncludes.add(includeName);
     return outArray;
 }
 
-export { addWgslInclude, getWgslInclude, preprocessWgsl, preprocessWgslLineMap };
+export { addWgslInclude, getIncludeList, getWgslInclude, preprocessWgsl, preprocessWgslLineMap };
