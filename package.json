@@ -1,0 +1,26 @@
+{
+  "name": "wgsl-preprocessor",
+  "version": "0.0.1",
+  "description": "A WGSL preprocessor in typescript",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/baldurstod/wgsl-preprocessor.git"
+  },
+  "bugs": {
+    "url": "https://github.com/baldurstod/wgsl-preprocessor/issues"
+  },
+  "homepage": "https://github.com/baldurstod/wgsl-preprocessor#readme",
+  "devDependencies": {
+    "@rollup/plugin-typescript": "^12.3.0",
+    "rollup": "^4.53.3",
+    "tslib": "^2.8.1",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.49.0"
+  }
+}
