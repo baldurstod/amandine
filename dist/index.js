@@ -128,21 +128,17 @@ function preprocess(lines, defines) {
 function expandIncludes(source) {
     const lines = source.split('\n');
     const allIncludes = new Set();
-    let compileRow = 1;
     const outArray = [];
-    const sourceRowToInclude = new Map();
     for (let i = 0; i < lines.length; ++i) {
         const line = lines[i];
         if (line.trim().startsWith('#include')) {
             const includeName = line.replace('#include', '').trim();
-            const include = getInclude(includeName, sourceRowToInclude, compileRow, new Set(), allIncludes);
+            const include = getInclude(includeName, new Set(), allIncludes);
             if (include) {
-                sourceRowToInclude.set(compileRow, [includeName, include.length]);
                 for (let j = 0; j < include.length; j++) {
                     const includeLine = include[j];
                     outArray.push({ line: includeLine.line, originalLine: i + 1, includeLine });
                 }
-                compileRow += include.length;
                 include.length;
             }
             else {
@@ -153,12 +149,11 @@ function expandIncludes(source) {
         }
         else {
             outArray.push({ line, originalLine: i + 1, });
-            ++compileRow;
         }
     }
     return outArray;
 }
-function getInclude(includeName, sourceRowToInclude, compileRow = 0, recursion = new Set(), allIncludes = new Set()) {
+function getInclude(includeName, recursion = new Set(), allIncludes = new Set()) {
     if (recursion.has(includeName)) {
         console.error('Include recursion in ' + includeName);
         return null;
@@ -175,14 +170,12 @@ function getInclude(includeName, sourceRowToInclude, compileRow = 0, recursion =
         const line = includeLineArray[i];
         if (line.trim().startsWith('#include')) {
             const nestedIncludeName = line.replace('#include', '').trim();
-            const include = getInclude(nestedIncludeName, sourceRowToInclude, compileRow + i, recursion, allIncludes);
+            const include = getInclude(nestedIncludeName, recursion, allIncludes);
             if (include) {
-                sourceRowToInclude.set(compileRow, [nestedIncludeName, include.length]);
                 for (let j = 0; j < include.length; j++) {
                     const includeLine = include[j];
                     outArray.push({ sourceName: includeName, line: includeLine.line, originalLine: i + 1, includeLine });
                 }
-                compileRow += include.length;
             }
             continue;
         }
@@ -196,7 +189,6 @@ function getInclude(includeName, sourceRowToInclude, compileRow = 0, recursion =
             }
         }
         outArray.push({ sourceName: includeName, line, originalLine: i + 1, });
-        ++compileRow;
     }
     allIncludes.add(includeName);
     return outArray;
