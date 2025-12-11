@@ -108,42 +108,44 @@ class Branch {
         }
     }
 }
-function setWgslInclude(name, source) {
-    includes.set(name, source);
-}
-function getWgslInclude(name) {
-    return includes.get(name);
-}
-function preprocessWgsl(source, defines = new Map()) {
-    const expandedArray = expandIncludes(source);
-    const processedArray = preprocess(expandedArray, defines);
-    const finalArray = [];
-    for (const line of processedArray) {
-        finalArray.push(line.line);
+class WgslPreprocessor {
+    static setWgslInclude(name, source) {
+        includes.set(name, source);
     }
-    return finalArray.join('\n');
-}
-function getIncludeList(source, defines = new Map()) {
-    const expandedArray = expandIncludes(source);
-    const processedArray = preprocess(expandedArray, defines);
-    const includes = new Set();
-    function addInclude(line) {
-        if (line.sourceName) {
-            includes.add(line.sourceName);
+    static getWgslInclude(name) {
+        return includes.get(name);
+    }
+    static preprocessWgsl(source, defines = new Map()) {
+        const expandedArray = expandIncludes(source);
+        const processedArray = preprocess(expandedArray, defines);
+        const finalArray = [];
+        for (const line of processedArray) {
+            finalArray.push(line.line);
         }
-        if (line.includeLine) {
-            addInclude(line.includeLine);
+        return finalArray.join('\n');
+    }
+    static getIncludeList(source, defines = new Map()) {
+        const expandedArray = expandIncludes(source);
+        const processedArray = preprocess(expandedArray, defines);
+        const includes = new Set();
+        function addInclude(line) {
+            if (line.sourceName) {
+                includes.add(line.sourceName);
+            }
+            if (line.includeLine) {
+                addInclude(line.includeLine);
+            }
         }
+        for (const line of processedArray) {
+            addInclude(line);
+        }
+        return includes;
     }
-    for (const line of processedArray) {
-        addInclude(line);
+    static preprocessWgslLineMap(source, defines = new Map()) {
+        const expandedArray = expandIncludes(source);
+        const processedArray = preprocess(expandedArray, defines);
+        return processedArray;
     }
-    return includes;
-}
-function preprocessWgslLineMap(source, defines = new Map()) {
-    const expandedArray = expandIncludes(source);
-    const processedArray = preprocess(expandedArray, defines);
-    return processedArray;
 }
 function preprocess(lines, defines) {
     const branch = new Branch(new TrueCondition());
@@ -221,4 +223,4 @@ function getInclude(includeName, recursion = new Set(), allIncludes = new Set())
     return outArray;
 }
 
-export { getIncludeList, getWgslInclude, preprocessWgsl, preprocessWgslLineMap, setWgslInclude };
+export { WgslPreprocessor };

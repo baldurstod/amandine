@@ -153,14 +153,6 @@ class Branch {
 	}
 }
 
-export function setWgslInclude(name: string, source: string): void {
-	includes.set(name, source);
-}
-
-export function getWgslInclude(name: string): string | undefined {
-	return includes.get(name);
-}
-
 export type FinalLine = {
 	sourceName?: string;
 	line: string;
@@ -168,47 +160,58 @@ export type FinalLine = {
 	includeLine?: FinalLine;
 }
 
-export function preprocessWgsl(source: string, defines: Map<string, string> = new Map<string, string>()): string {
-	const expandedArray = expandIncludes(source);
+export class WgslPreprocessor {
 
-	const processedArray = preprocess(expandedArray, defines);
-
-	const finalArray: string[] = [];
-	for (const line of processedArray) {
-		finalArray.push(line.line);
+	static setWgslInclude(name: string, source: string): void {
+		includes.set(name, source);
 	}
-	return finalArray.join('\n');
-}
 
-export function getIncludeList(source: string, defines: Map<string, string> = new Map<string, string>()): Set<string> {
-	const expandedArray = expandIncludes(source);
+	static getWgslInclude(name: string): string | undefined {
+		return includes.get(name);
+	}
 
-	const processedArray = preprocess(expandedArray, defines);
+	static preprocessWgsl(source: string, defines: Map<string, string> = new Map<string, string>()): string {
+		const expandedArray = expandIncludes(source);
 
-	const includes = new Set<string>();
+		const processedArray = preprocess(expandedArray, defines);
 
-	function addInclude(line: FinalLine): void {
-		if (line.sourceName) {
-			includes.add(line.sourceName);
+		const finalArray: string[] = [];
+		for (const line of processedArray) {
+			finalArray.push(line.line);
+		}
+		return finalArray.join('\n');
+	}
+
+	static getIncludeList(source: string, defines: Map<string, string> = new Map<string, string>()): Set<string> {
+		const expandedArray = expandIncludes(source);
+
+		const processedArray = preprocess(expandedArray, defines);
+
+		const includes = new Set<string>();
+
+		function addInclude(line: FinalLine): void {
+			if (line.sourceName) {
+				includes.add(line.sourceName);
+			}
+
+			if (line.includeLine) {
+				addInclude(line.includeLine);
+			}
 		}
 
-		if (line.includeLine) {
-			addInclude(line.includeLine);
+		for (const line of processedArray) {
+			addInclude(line);
 		}
+		return includes;
 	}
 
-	for (const line of processedArray) {
-		addInclude(line);
+	static preprocessWgslLineMap(source: string, defines: Map<string, string> = new Map<string, string>()): FinalLine[] {
+		const expandedArray = expandIncludes(source);
+
+		const processedArray = preprocess(expandedArray, defines);
+
+		return processedArray;
 	}
-	return includes;
-}
-
-export function preprocessWgslLineMap(source: string, defines: Map<string, string> = new Map<string, string>()): FinalLine[] {
-	const expandedArray = expandIncludes(source);
-
-	const processedArray = preprocess(expandedArray, defines);
-
-	return processedArray;
 }
 
 function preprocess(lines: FinalLine[], defines: Map<string, string>): FinalLine[] {
