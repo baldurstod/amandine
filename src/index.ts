@@ -101,6 +101,10 @@ class Branch {
 					this.#currentSubBranch = new Branch(new IsDefinedCondition(matchedSymbol[2]!));
 					this.#lines.push(this.#currentSubBranch);
 					return true;
+				case 'ifndef':
+					this.#currentSubBranch = new Branch(new FlipCondition(new IsDefinedCondition(matchedSymbol[2]!)));
+					this.#lines.push(this.#currentSubBranch);
+					return true;
 				case 'else':
 					if (this.#currentSubBranch) {
 						this.#currentSubBranch = new Branch(new FlipCondition(this.#currentSubBranch.condition));
