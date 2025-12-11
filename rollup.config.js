@@ -6,7 +6,7 @@ const TEMP_BUILD = './dist/dts/index.js';
 
 export default [
 	{
-		input: './src/preprocessor.ts',
+		input: './src/index.ts',
 		output: {
 			file: TEMP_BUILD,
 			format: 'esm'

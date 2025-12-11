@@ -5,14 +5,12 @@ export declare type FinalLine = {
     includeLine?: FinalLine;
 };
 
-export declare function getIncludeList(source: string, defines?: Map<string, string>): Set<string>;
-
-export declare function getWgslInclude(name: string): string | undefined;
-
-export declare function preprocessWgsl(source: string, defines?: Map<string, string>): string;
-
-export declare function preprocessWgslLineMap(source: string, defines?: Map<string, string>): FinalLine[];
-
-export declare function setWgslInclude(name: string, source: string): void;
+export declare class WgslPreprocessor {
+    static setWgslInclude(name: string, source: string): void;
+    static getWgslInclude(name: string): string | undefined;
+    static preprocessWgsl(source: string, defines?: Map<string, string>): string;
+    static getIncludeList(source: string, defines?: Map<string, string>): Set<string>;
+    static preprocessWgslLineMap(source: string, defines?: Map<string, string>): FinalLine[];
+}
 
 export { }
