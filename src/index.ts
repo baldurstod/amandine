@@ -1,3 +1,5 @@
+import { evaluateExpression } from "./expression";
+
 const includes = new Map<string, string>();
 
 const PRAGMA_REGEX = /#pragma (\w+)/;
@@ -6,15 +8,20 @@ interface Condition {
 	isTrue: (defines: Map<string, string>) => boolean;
 }
 
-class SimpleCondition implements Condition {
-	#condition: string;
+class ExpressionCondition implements Condition {
+	#expression: string;
+	#result?: boolean;
 
-	constructor(condition: string) {
-		this.#condition = condition;
+	constructor(expression: string) {
+		this.#expression = expression;
 	}
 
-	isTrue(): boolean {
-		return true;
+	isTrue(defines: Map<string, string>): boolean {
+		if (this.#result === undefined) {
+			this.#result = evaluateExpression(this.#expression) == true;
+		}
+
+		return this.#result;
 	}
 }
 
@@ -103,6 +110,10 @@ class Branch {
 					return true;
 				case 'ifndef':
 					this.#currentSubBranch = new Branch(new FlipCondition(new IsDefinedCondition(matchedSymbol[2]!)));
+					this.#lines.push(this.#currentSubBranch);
+					return true;
+				case 'if':
+					this.#currentSubBranch = new Branch(new ExpressionCondition(matchedSymbol[2]!));
 					this.#lines.push(this.#currentSubBranch);
 					return true;
 				case 'else':
