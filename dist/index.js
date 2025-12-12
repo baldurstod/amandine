@@ -233,7 +233,7 @@ class FlipCondition {
 }
 function replaceDefine(line, defines) {
     for (let [oldValue, newValue] of defines) {
-        line = line.replace(oldValue, newValue);
+        line = line.replace(new RegExp('\\b' + oldValue + '\\b', 'g'), newValue);
     }
     return line;
 }

@@ -68,7 +68,7 @@ class FlipCondition implements Condition {
 
 function replaceDefine(line: string, defines: Map<string, string>): string {
 	for (let [oldValue, newValue] of defines) {
-		line = line.replace(oldValue, newValue);
+		line = line.replace(new RegExp('\\b' + oldValue  + '\\b', 'g'), newValue);
 	}
 	return line;
 }
