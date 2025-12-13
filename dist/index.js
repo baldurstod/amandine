@@ -20,48 +20,55 @@ var WgslToken;
 class AddOperator {
     isExpressionOperator = true;
     operators = [, ,];
-    //operator2?: ExpressionOperator;
     arguments = 2;
-    eval() {
-        return Number(this.operators[0]?.eval()) + Number(this.operators[1]?.eval());
+    eval(defines) {
+        return Number(this.operators[0]?.eval(defines)) + Number(this.operators[1]?.eval(defines));
+    }
+}
+class MultiplyOperator {
+    isExpressionOperator = true;
+    operators = [, ,];
+    arguments = 2;
+    eval(defines) {
+        return Number(this.operators[0]?.eval(defines)) * Number(this.operators[1]?.eval(defines));
     }
 }
 class ComparisonOperator {
     isExpressionOperator = true;
     operators = [, ,];
     arguments = 2;
-    eval() {
-        return this.operators[0]?.eval() == this.operators[1]?.eval();
+    eval(defines) {
+        return this.operators[0]?.eval(defines) == this.operators[1]?.eval(defines);
     }
 }
 class EqualOperator extends ComparisonOperator {
-    eval() {
-        return this.operators[0]?.eval() == this.operators[1]?.eval();
+    eval(defines) {
+        return this.operators[0]?.eval(defines) == this.operators[1]?.eval(defines);
     }
 }
 class NotEqualOperator extends ComparisonOperator {
-    eval() {
-        return this.operators[0]?.eval() != this.operators[1]?.eval();
+    eval(defines) {
+        return this.operators[0]?.eval(defines) != this.operators[1]?.eval(defines);
     }
 }
 class LessOperator extends ComparisonOperator {
-    eval() {
-        return Number(this.operators[0]?.eval()) < Number(this.operators[1]?.eval());
+    eval(defines) {
+        return Number(this.operators[0]?.eval(defines)) < Number(this.operators[1]?.eval(defines));
     }
 }
 class LessEqualOperator extends ComparisonOperator {
-    eval() {
-        return Number(this.operators[0]?.eval()) <= Number(this.operators[1]?.eval());
+    eval(defines) {
+        return Number(this.operators[0]?.eval(defines)) <= Number(this.operators[1]?.eval(defines));
     }
 }
 class GreaterOperator extends ComparisonOperator {
-    eval() {
-        return Number(this.operators[0]?.eval()) > Number(this.operators[1]?.eval());
+    eval(defines) {
+        return Number(this.operators[0]?.eval(defines)) > Number(this.operators[1]?.eval(defines));
     }
 }
 class GreaterEqualOperator extends ComparisonOperator {
-    eval() {
-        return Number(this.operators[0]?.eval()) >= Number(this.operators[1]?.eval());
+    eval(defines) {
+        return Number(this.operators[0]?.eval(defines)) >= Number(this.operators[1]?.eval(defines));
     }
 }
 class LiteralOperator {
@@ -76,12 +83,31 @@ class LiteralOperator {
         return this.literalValue;
     }
 }
-function parseExpression(expression) {
+class DefinedOperator {
+    isExpressionOperator = true;
+    defines;
+    literalValue;
+    operators = [];
+    arguments = 1;
+    constructor(defines) {
+        this.defines = defines;
+    }
+    eval() {
+        return this.literalValue;
+    }
+}
+function parseExpression(expression, defines) {
     const tokenIterator = getNextToken(expression);
     const operatorStack = [];
     const valueStack = [];
     for (const token of tokenIterator) {
         switch (token) {
+            case WgslToken.Add:
+                operatorStack.push(new AddOperator());
+                break;
+            case WgslToken.Multiply:
+                operatorStack.push(new MultiplyOperator());
+                break;
             case WgslToken.Equal:
                 operatorStack.push(new EqualOperator());
                 break;
@@ -100,6 +126,9 @@ function parseExpression(expression) {
             case WgslToken.GreaterEqual:
                 operatorStack.push(new GreaterEqualOperator());
                 break;
+            case 'defined':
+                operatorStack.push(new DefinedOperator(defines));
+                break;
             default:
                 if (typeof token == 'string') {
                     valueStack.push(new LiteralOperator(token));
@@ -111,6 +140,7 @@ function parseExpression(expression) {
     }
     let ope;
     while (ope = operatorStack.pop()) {
+        //console.info(ope);
         for (let i = 0; i < ope.arguments; i++) {
             ope.operators[ope.arguments - i - 1] = valueStack.pop();
         }
@@ -118,9 +148,9 @@ function parseExpression(expression) {
     }
     return valueStack[0];
 }
-function evaluateExpression(expression) {
-    const operator = parseExpression(expression);
-    return operator?.eval();
+function evaluateExpression(expression, defines) {
+    const operator = parseExpression(expression, defines);
+    return operator?.eval(defines);
 }
 function* getNextChar(wgsl) {
     wgsl.length;
@@ -266,7 +296,7 @@ class ExpressionCondition {
     }
     isTrue(defines) {
         if (this.#result === undefined) {
-            this.#result = evaluateExpression(this.#expression) == true;
+            this.#result = evaluateExpression(this.#expression, defines) == true;
         }
         return this.#result;
     }
@@ -320,7 +350,7 @@ class Branch {
             switch (matchedSymbol[1]) {
                 // #define. defines are defined for the subsequent lines
                 case 'define':
-                    if (this.condition.isTrue()) {
+                    if (this.condition.isTrue(defines)) {
                         const defineSymbols = /#([^\s]*)\s*([^\s]*)\s*(.*)/g.exec(line.line);
                         if (defineSymbols && defineSymbols.length > 3) {
                             defines.set(defineSymbols[2], defineSymbols[3]);
@@ -328,7 +358,7 @@ class Branch {
                     }
                     return true;
                 case 'undef':
-                    if (this.condition.isTrue()) {
+                    if (this.condition.isTrue(defines)) {
                         const undefSymbols = /#([^\s]*)\s*([^\s]*)/g.exec(line.line);
                         if (undefSymbols && undefSymbols.length > 2) {
                             defines.delete(undefSymbols[2]);
@@ -522,4 +552,4 @@ function getInclude(includeName, recursion = new Set(), allIncludes = new Set())
     return outArray;
 }
 
-export { WgslPreprocessor };
+export { WgslPreprocessor, evaluateExpression };

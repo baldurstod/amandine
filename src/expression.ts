@@ -22,20 +22,28 @@ type ExpressionValue = number | boolean | undefined | string;
 interface ExpressionOperator {
 	isExpressionOperator: true;
 	readonly arguments: number;
-	//setArgument: (index: number, value: ExpressionOperator) => void;
 
 	operators: (ExpressionOperator | undefined)[];
-	eval: () => ExpressionValue;
+	eval: (defines: Map<string, string>) => ExpressionValue;
 }
 
 class AddOperator implements ExpressionOperator {
 	isExpressionOperator = true as const;
 	operators: [ExpressionOperator | undefined, ExpressionOperator | undefined] = [, ,];
-	//operator2?: ExpressionOperator;
 	readonly arguments = 2;
 
-	eval(): ExpressionValue {
-		return Number(this.operators[0]?.eval()) + Number(this.operators[1]?.eval());
+	eval(defines: Map<string, string>): ExpressionValue {
+		return Number(this.operators[0]?.eval(defines)) + Number(this.operators[1]?.eval(defines));
+	}
+}
+
+class MultiplyOperator implements ExpressionOperator {
+	isExpressionOperator = true as const;
+	operators: [ExpressionOperator | undefined, ExpressionOperator | undefined] = [, ,];
+	readonly arguments = 2;
+
+	eval(defines: Map<string, string>): ExpressionValue {
+		return Number(this.operators[0]?.eval(defines)) * Number(this.operators[1]?.eval(defines));
 	}
 }
 
@@ -44,44 +52,44 @@ class ComparisonOperator implements ExpressionOperator {
 	operators: [ExpressionOperator | undefined, ExpressionOperator | undefined] = [, ,];
 	readonly arguments = 2;
 
-	eval(): boolean {
-		return this.operators[0]?.eval() == this.operators[1]?.eval();
+	eval(defines: Map<string, string>): boolean {
+		return this.operators[0]?.eval(defines) == this.operators[1]?.eval(defines);
 	}
 }
 
 class EqualOperator extends ComparisonOperator {
-	eval(): boolean {
-		return this.operators[0]?.eval() == this.operators[1]?.eval();
+	eval(defines: Map<string, string>): boolean {
+		return this.operators[0]?.eval(defines) == this.operators[1]?.eval(defines);
 	}
 }
 
 class NotEqualOperator extends ComparisonOperator {
-	eval(): boolean {
-		return this.operators[0]?.eval() != this.operators[1]?.eval();
+	eval(defines: Map<string, string>): boolean {
+		return this.operators[0]?.eval(defines) != this.operators[1]?.eval(defines);
 	}
 }
 
 class LessOperator extends ComparisonOperator {
-	eval(): boolean {
-		return Number(this.operators[0]?.eval()) < Number(this.operators[1]?.eval());
+	eval(defines: Map<string, string>): boolean {
+		return Number(this.operators[0]?.eval(defines)) < Number(this.operators[1]?.eval(defines));
 	}
 }
 
 class LessEqualOperator extends ComparisonOperator {
-	eval(): boolean {
-		return Number(this.operators[0]?.eval()) <= Number(this.operators[1]?.eval());
+	eval(defines: Map<string, string>): boolean {
+		return Number(this.operators[0]?.eval(defines)) <= Number(this.operators[1]?.eval(defines));
 	}
 }
 
 class GreaterOperator extends ComparisonOperator {
-	eval(): boolean {
-		return Number(this.operators[0]?.eval()) > Number(this.operators[1]?.eval());
+	eval(defines: Map<string, string>): boolean {
+		return Number(this.operators[0]?.eval(defines)) > Number(this.operators[1]?.eval(defines));
 	}
 }
 
 class GreaterEqualOperator extends ComparisonOperator {
-	eval(): boolean {
-		return Number(this.operators[0]?.eval()) >= Number(this.operators[1]?.eval());
+	eval(defines: Map<string, string>): boolean {
+		return Number(this.operators[0]?.eval(defines)) >= Number(this.operators[1]?.eval(defines));
 	}
 }
 
@@ -100,7 +108,23 @@ class LiteralOperator implements ExpressionOperator {
 	}
 }
 
-function parseExpression(expression: string): ExpressionOperator | undefined {
+class DefinedOperator implements ExpressionOperator {
+	isExpressionOperator = true as const;
+	defines: Map<string, string>;
+	literalValue: ExpressionValue;
+	operators = [];
+	readonly arguments = 1;
+
+	constructor(defines: Map<string, string>) {
+		this.defines = defines;
+	}
+
+	eval(): ExpressionValue {
+		return this.literalValue;
+	}
+}
+
+function parseExpression(expression: string, defines: Map<string, string>): ExpressionOperator | undefined {
 	const tokenIterator = getNextToken(expression);
 
 	const operatorStack: ExpressionOperator[] = [];
@@ -108,6 +132,12 @@ function parseExpression(expression: string): ExpressionOperator | undefined {
 
 	for (const token of tokenIterator) {
 		switch (token) {
+			case WgslToken.Add:
+				operatorStack.push(new AddOperator());
+				break;
+			case WgslToken.Multiply:
+				operatorStack.push(new MultiplyOperator());
+				break;
 			case WgslToken.Equal:
 				operatorStack.push(new EqualOperator());
 				break;
@@ -126,6 +156,9 @@ function parseExpression(expression: string): ExpressionOperator | undefined {
 			case WgslToken.GreaterEqual:
 				operatorStack.push(new GreaterEqualOperator());
 				break;
+			case 'defined':
+				operatorStack.push(new DefinedOperator(defines));
+				break;
 			default:
 				if (typeof token == 'string') {
 					valueStack.push(new LiteralOperator(token as string));
@@ -137,6 +170,7 @@ function parseExpression(expression: string): ExpressionOperator | undefined {
 
 	let ope: ExpressionOperator | undefined;
 	while (ope = operatorStack.pop()) {
+		//console.info(ope);
 		for (let i = 0; i < ope.arguments; i++) {
 			ope.operators[ope.arguments - i - 1] = valueStack.pop();
 		}
@@ -146,9 +180,9 @@ function parseExpression(expression: string): ExpressionOperator | undefined {
 	return valueStack[0];
 }
 
-export function evaluateExpression(expression: string): ExpressionValue {
-	const operator = parseExpression(expression);
-	return operator?.eval();
+export function evaluateExpression(expression: string, defines: Map<string, string>): ExpressionValue {
+	const operator = parseExpression(expression, defines);
+	return operator?.eval(defines);
 }
 
 function* getNextChar(wgsl: string): Generator<string, null, unknown> {
