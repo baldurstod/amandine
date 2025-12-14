@@ -19,11 +19,15 @@ export enum WgslToken {
 
 enum Precedence {
 	Lowest = 0,
-	Ternary = Lowest + 1,
-	Additive = Ternary + 1,
-	Multiplicative = Additive + 1,
-	Function = Multiplicative + 1,
-	Literal = Function + 1,
+	Ternary,
+	LogicalOr,
+	LogicalAnd,
+	Equality,
+	Relational,
+	Additive,
+	Multiplicative,
+	Function,
+	Literal,
 }
 
 type ExpressionValue = number | boolean | undefined | string;
@@ -166,8 +170,7 @@ class ComparisonOperator implements ExpressionOperator {
 	isExpressionOperator = true as const;
 	operators: [ExpressionValue | undefined, ExpressionValue | undefined] = [, ,];
 	readonly arguments = 2;
-	readonly precedence = Precedence.Additive;
-
+	precedence = Precedence.Relational;
 
 	eval(defines: Map<string, string>): boolean {
 		return this.operators[0] == this.operators[1];
@@ -175,24 +178,32 @@ class ComparisonOperator implements ExpressionOperator {
 }
 
 class AndOperator extends ComparisonOperator {
+	readonly precedence = Precedence.LogicalAnd;
+
 	eval(defines: Map<string, string>): boolean {
 		return (this.operators[0] as boolean) && (this.operators[1] as boolean);
 	}
 }
 
 class OrOperator extends ComparisonOperator {
+	readonly precedence = Precedence.LogicalOr;
+
 	eval(defines: Map<string, string>): boolean {
 		return (this.operators[0] as boolean) || (this.operators[1] as boolean);
 	}
 }
 
 class EqualOperator extends ComparisonOperator {
+	readonly precedence = Precedence.Equality;
+
 	eval(defines: Map<string, string>): boolean {
 		return this.operators[0] == this.operators[1];
 	}
 }
 
 class NotEqualOperator extends ComparisonOperator {
+	readonly precedence = Precedence.Equality;
+
 	eval(defines: Map<string, string>): boolean {
 		return this.operators[0] != this.operators[1];
 	}

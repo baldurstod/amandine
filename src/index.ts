@@ -1,11 +1,12 @@
-import { evaluateExpression } from "./expression";
+import { evaluateExpression } from './expression';
+export { evaluateExpression };
 
 const includes = new Map<string, string>();
 
 const PRAGMA_REGEX = /#pragma (\w+)/;
 
 interface Condition {
-	isTrue: (defines?: Map<string, string>) => boolean;
+	isTrue: (defines: Map<string, string>) => boolean;
 }
 
 class ExpressionCondition implements Condition {
@@ -16,9 +17,9 @@ class ExpressionCondition implements Condition {
 		this.#expression = expression;
 	}
 
-	isTrue(defines?: Map<string, string>): boolean {
+	isTrue(defines: Map<string, string>): boolean {
 		if (this.#result === undefined) {
-			this.#result = evaluateExpression(this.#expression) == true;
+			this.#result = evaluateExpression(this.#expression, defines) == true;
 		}
 
 		return this.#result;
@@ -34,7 +35,7 @@ class AndCondition implements Condition {
 		this.#condition2 = condition2;
 	}
 
-	isTrue(defines?: Map<string, string>): boolean {
+	isTrue(defines: Map<string, string>): boolean {
 		if (!this.#condition1.isTrue(defines)) {
 			return false;
 		}
@@ -61,14 +62,14 @@ class FlipCondition implements Condition {
 		this.#condition = condition;
 	}
 
-	isTrue(defines?: Map<string, string>): boolean {
+	isTrue(defines: Map<string, string>): boolean {
 		return !this.#condition.isTrue(defines);
 	}
 }
 
 function replaceDefine(line: string, defines: Map<string, string>): string {
 	for (let [oldValue, newValue] of defines) {
-		line = line.replace(new RegExp('\\b' + oldValue  + '\\b', 'g'), newValue);
+		line = line.replace(new RegExp('\\b' + oldValue + '\\b', 'g'), newValue);
 	}
 	return line;
 }
@@ -100,7 +101,7 @@ class Branch {
 			switch (matchedSymbol[1]) {
 				// #define. defines are defined for the subsequent lines
 				case 'define':
-					if (this.condition.isTrue()) {
+					if (this.condition.isTrue(defines)) {
 						const defineSymbols = /#([^\s]*)\s*([^\s]*)\s*(.*)/g.exec(line.line);
 						if (defineSymbols && defineSymbols.length > 3) {
 							defines.set(defineSymbols[2]!, defineSymbols[3]!);
@@ -108,7 +109,7 @@ class Branch {
 					}
 					return true;
 				case 'undef':
-					if (this.condition.isTrue()) {
+					if (this.condition.isTrue(defines)) {
 						const undefSymbols = /#([^\s]*)\s*([^\s]*)/g.exec(line.line);
 						if (undefSymbols && undefSymbols.length > 2) {
 							defines.delete(undefSymbols[2]!);

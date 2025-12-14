@@ -1,3 +1,7 @@
+export declare function evaluateExpression(expression: string, defines: Map<string, string>): ExpressionValue;
+
+declare type ExpressionValue = number | boolean | undefined | string;
+
 export declare type FinalLine = {
     sourceName?: string;
     line: string;

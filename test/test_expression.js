@@ -7,6 +7,7 @@ evaluate('defined(TEST)');
 evaluate('defined(IS_DEFINED)');
 evaluate('true && false');
 evaluate('true || false');
+evaluate('true && false || true');
 
 function evaluate(expression) {
 	const result = evaluateExpression(expression, new Map([['IS_DEFINED', '']]));
