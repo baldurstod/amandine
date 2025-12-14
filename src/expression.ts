@@ -360,7 +360,8 @@ function parseExpression(expression: string, defines: Map<string, string>): Expr
 				}
 				break;
 			case WgslToken.CloseParenthesis:
-				const exp = expressionStack.pop();
+				expressionStack.pop();
+				const exp = expressionStack[expressionStack.length - 1];
 				if (!exp) {
 					throw new Error('unmatched closing parenthesis');
 				}

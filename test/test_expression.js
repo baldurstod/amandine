@@ -9,8 +9,9 @@ evaluate('true && false');
 evaluate('true || false');
 evaluate('true && false || true');
 evaluate(' > 0');
+evaluate('defined(FOO) && FOO >= 1  ', new Map([['FOO', 1]]));
 
-function evaluate(expression) {
-	const result = evaluateExpression(expression, new Map([['IS_DEFINED', '']]));
+function evaluate(expression, defines) {
+	const result = evaluateExpression(expression, defines ?? new Map([['IS_DEFINED', '']]));
 	console.info(`result for ${expression}: ${result}`);
 }
