@@ -1,5 +1,5 @@
 {
-  "name": "wgsl-preprocessor",
+  "name": "amandine",
   "version": "0.0.18",
   "description": "A WGSL preprocessor in typescript",
   "main": "dist/index.js",
@@ -11,12 +11,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/baldurstod/wgsl-preprocessor.git"
+    "url": "git+https://github.com/baldurstod/amandine.git"
   },
   "bugs": {
-    "url": "https://github.com/baldurstod/wgsl-preprocessor/issues"
+    "url": "https://github.com/baldurstod/amandine/issues"
   },
-  "homepage": "https://github.com/baldurstod/wgsl-preprocessor#readme",
+  "homepage": "https://github.com/baldurstod/amandine#readme",
   "devDependencies": {
     "@rollup/plugin-typescript": "^12.3.0",
     "rollup": "^4.53.3",

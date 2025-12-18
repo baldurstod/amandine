@@ -1,2 +1,2 @@
-# wgsl-preprocessor
+# Amandine
 A WGSL preprocessor in typescript
